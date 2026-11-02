@@ -1,0 +1,10 @@
+{
+  "name": "milda",
+  "version": "0.1.0",
+  "description": "Teaches Claude the Milda design-system language: reading, writing and checking .milda files, and thinking in tokens, contexts, archetypes and platform-neutral parts.",
+  "author": { "name": "Milda", "url": "https://milda.dev" },
+  "homepage": "https://milda.dev",
+  "repository": "https://github.com/mildastudio/milda-skills",
+  "license": "MIT",
+  "keywords": ["milda", "design-system", "design-tokens", "dsl"]
+}

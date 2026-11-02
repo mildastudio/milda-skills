@@ -1,0 +1,14 @@
+{
+  "name": "milda",
+  "owner": { "name": "Milda", "url": "https://milda.dev" },
+  "metadata": {
+    "description": "The Milda design-system language, for AI assistants."
+  },
+  "plugins": [
+    {
+      "name": "milda",
+      "source": "./",
+      "description": "Read, write and check .milda design systems, and think in Milda's paradigm."
+    }
+  ]
+}

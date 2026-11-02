@@ -1,0 +1,241 @@
+milda 0.10
+prelude 0.0.2
+
+meta { name "Acme" }
+
+# Dimensions the system varies along. A token answers per context; a prop typed by a
+# context group lets each instance pick its own value.
+context-group ColorScheme { Light Dark }
+context-group Variant { Primary Secondary Ghost }
+
+group Actions "Things a person presses to make something happen."
+group Forms "Collecting input."
+group Feedback "Telling a person what is happening."
+
+foundations {
+  # Base holds the literals and nothing else.
+  layer Base {
+    token violet/100 : color = hex(ede9fe)
+    token violet/500 : color = hex(8b5cf6)
+    token violet/600 : color = hex(7c3aed)
+    token violet/700 : color = hex(6d28d9)
+    token violet/900 : color = hex(4c1d95)
+    token gray/50 : color = hex(f8fafc)
+    token gray/200 : color = hex(e2e8f0)
+    token gray/500 : color = hex(64748b)
+    token gray/800 : color = hex(1e293b)
+    token gray/900 : color = hex(0f172a)
+    token amber/500 : color = hex(f59e0b)
+    token white : color = hex(ffffff)
+  }
+
+  # Semantic names what a value is FOR, and aliases Base per context.
+  layer Semantic {
+    token accent : color = alias by ColorScheme { default -> violet.600; Dark -> violet.500 }
+    token accent-hover : color = compute accent in oklch { darken 10% }
+    token accent-subtle : color = alias by ColorScheme { default -> violet.100; Dark -> violet.900 }
+    token on-accent : color = alias by ColorScheme { default -> white }
+    token surface : color = alias by ColorScheme { default -> white; Dark -> gray.900 }
+    token text : color = alias by ColorScheme { default -> gray.900; Dark -> gray.50 }
+    token text-muted : color = alias by ColorScheme { default -> gray.500 }
+    token line : color = alias by ColorScheme { default -> gray.200; Dark -> gray.800 }
+    token warning : color = alias by ColorScheme { default -> amber.500 }
+
+    token space/xs : spacing = 4px
+    token space/sm : spacing = 8px
+    token space/md : spacing = 12px
+    token space/lg : spacing = 16px
+
+    token radius/sm : radius = 6px
+    token radius/pill : radius = pill
+    token hairline : border = 1px
+
+    token size/sm : font-size = 13px
+    token size/md : font-size = 15px
+    token weight/medium : font-weight = 500
+    token weight/bold : font-weight = 700
+
+    token font/sans : font-family = { family: "Inter"; fallback: sans-serif; source: google; license: "OFL-1.1" }
+    token body : typography = { family: font.sans; size: 15px; weight: 400; line-height: 1.5 }
+
+    token fast : duration = 120ms
+    token standard : easing = raw "cubic-bezier(0.2, 0, 0, 1)"
+  }
+}
+
+component Button "The primary action, in three emphases." {
+  archetype Button
+  group Actions
+
+  props {
+    variant : context Variant = Primary "Which emphasis the button carries."
+    disabled : boolean = false
+    label : string = "Get started"
+  }
+
+  events {
+    click
+  }
+
+  part Button: container {
+    emits { click on activate }
+    bind state disabled disabled
+    layout { stack row; gap space.sm; align center; distribute center }
+    fill accent
+    ink on-accent
+    border accent hairline
+    corner radius.sm
+    inset space.sm space.lg
+    motion {
+      transition fill ink duration fast easing standard
+    }
+    when variant = Secondary {
+      fill surface
+      ink text
+      border line hairline
+    }
+    when variant = Ghost {
+      fill surface
+      ink accent
+      border surface hairline
+    }
+    state hovered {
+      fill accent-hover
+      border accent-hover hairline
+    }
+    state hovered when variant = Ghost {
+      fill accent-subtle
+      border accent-subtle hairline
+    }
+    state focus-visible {
+      ring accent
+    }
+    state disabled {
+      opacity 50
+    }
+  }
+
+  part label: text {
+    slot of content default
+    content bind label
+    text body
+    weight weight.medium
+  }
+}
+
+component Badge "A small status pill." {
+  archetype Badge
+  group Feedback
+
+  props {
+    tone : enum(neutral, warning) = neutral
+    label : string = "New"
+  }
+
+  part Badge: container {
+    layout { stack row; align center }
+    fill accent-subtle
+    ink accent
+    corner radius.pill
+    inset space.xs space.sm
+    when tone = warning {
+      fill warning
+      ink gray.900
+    }
+  }
+
+  part label: text {
+    slot of content default
+    content bind label
+    text size.sm
+    weight weight.bold
+  }
+}
+
+component TextField "A single-line input with an error state." {
+  archetype TextField
+  group Forms
+
+  props {
+    label : string required "What the field asks for. Also its accessible name."
+    value : string
+    invalid : boolean = false
+    error : string required when invalid "Shown under the control while invalid."
+  }
+
+  events {
+    valueChange
+  }
+
+  part TextField: container {
+    bind state error invalid
+    layout { stack column; gap space.xs }
+  }
+
+  part label: text {
+    content bind label
+    text size.sm
+    weight weight.medium
+  }
+
+  part control: input {
+    emits {
+      valueChange on input payload bind value
+    }
+    bind value value
+    value string
+    a11y { labelled-by label; described-by hint }
+    layout { size fill }
+    fill surface
+    ink text
+    border line hairline
+    corner radius.sm
+    inset space.sm space.md
+    text size.md
+    state focus-visible {
+      border accent hairline
+    }
+    state error {
+      border warning hairline
+    }
+  }
+
+  part hint: text {
+    present when invalid
+    content bind error
+    ink warning
+    text size.sm
+  }
+}
+
+component Toolbar "A row of actions, built from Button." {
+  group Actions
+
+  part Toolbar: container {
+    layout { stack row; gap space.sm; align center; distribute end }
+    inset space.sm
+  }
+
+  part Cancel: instance {
+    instance Button {
+      label = "Cancel"
+      variant = "Ghost"
+    }
+  }
+
+  part Save: instance {
+    instance Button {
+      label = "Save"
+    }
+  }
+}
+
+rule one-primary-per-toolbar warning {
+  max 1 Button where variant = Primary within Toolbar
+  because "A toolbar has one way forward. Two primary buttons make the reader choose."
+}
+
+rule values-from-tokens warning {
+  tokens color, spacing, radius
+  because "Colours, spacing and radii come from the foundations, so a theme change reaches every component."
+}
